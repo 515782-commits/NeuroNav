@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroNav | Register Vehicle Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            overflow-y: auto;
+        }
+
+        .app-container {
+            min-height: 100vh;
+        }
+
+        .register-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            padding-bottom: calc(var(--spacing-xl) * 3);
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: var(--spacing-lg);
+            min-height: calc(100vh - 180px);
+        }
+
+        .register-form-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .form-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--accent-cyan);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .form-title svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: var(--bg-secondary);
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .country-code {
+            width: 80px;
+            text-align: center;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--bg-primary);
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: var(--spacing-md);
+        }
+
+        .btn-register:hover {
+            box-shadow: var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Registered Devices List */
+        .devices-panel {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .devices-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .device-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .device-card:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 245, 212, 0.05);
+        }
+
+        .device-card.active {
+            border-color: var(--accent-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .device-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .device-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .device-phone {
+            font-family: var(--font-display);
+            color: var(--accent-cyan);
+            font-size: 0.9rem;
+        }
+
+        .device-vehicle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .device-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.online {
+            background: rgba(0, 245, 212, 0.2);
+            color: var(--accent-cyan);
+        }
+
+        .status-badge.offline {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+        }
+
+        .device-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-action:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn-action.delete:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .btn-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Map Section */
+        .map-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-header {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .map-header h3 {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tracking-info {
+            display: flex;
+            gap: var(--spacing-lg);
+        }
+
+        .tracking-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tracking-stat .value {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+        }
+
+        .tracking-stat .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        #trackingMap {
+            flex: 1;
+            min-height: 400px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-xl);
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        /* Success Animation */
+        .success-toast {
+            position: fixed;
+            top: 100px;
+            right: var(--spacing-lg);
+            background: var(--bg-card);
+            border: 1px solid var(--accent-cyan);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            box-shadow: var(--glow-cyan);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .success-toast.show {
+            transform: translateX(0);
+        }
+
+        .success-toast svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-cyan);
+        }
+
+        @media (max-width: 1000px) {
+            .register-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo">
+                <a href="index.html" style="display: flex; align-items: center; gap: 16px; text-decoration: none;">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 40 40" fill="none">
+                            <circle cx="20" cy="20" r="18" stroke="url(#logoGrad)" stroke-width="2"/>
+                            <path d="M20 8 L20 32 M12 16 L20 8 L28 16 M12 24 L20 32 L28 24" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#00f5d4"/>
+                                    <stop offset="100%" stop-color="#7b2cbf"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <span class="logo-text">NEURONAV</span>
+                </a>
+            </div>
+            <nav style="display: flex; gap: 16px;">
+                <a href="index.html" class="btn-icon" title="Live Map">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                        <line x1="8" y1="2" x2="8" y2="18"/>
+                        <line x1="16" y1="6" x2="16" y2="22"/>
+                    </svg>
+                </a>
+                <a href="register.html" class="btn-icon" title="Register Tracker" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/>
+                        <line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                </a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <div class="register-container">
+            <!-- Left: Registration Form -->
+            <div class="register-form-section">
+                <div class="form-panel">
+                    <h2 class="form-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        Register IoT Tracker
+                    </h2>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label">Owner Name</label>
+                            <input type="text" class="form-input" id="ownerName" placeholder="Enter full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <div class="phone-input-group">
+                                <input type="text" class="form-input country-code" value="+91" id="countryCode">
+                                <input type="tel" class="form-input" id="phoneNumber" placeholder="9876543210" required pattern="[0-9]{10}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vehicle Type</label>
+                            <select class="form-select" id="vehicleType" required>
+                                <option value="">Select vehicle type</option>
+                                <option value="car">Car / Sedan</option>
+                                <option value="suv">SUV</option>
+                                <option value="motorcycle">Motorcycle</option>
+                                <option value="truck">Truck</option>
+                                <option value="bus">Bus</option>
+                                <option value="auto">Auto Rickshaw</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vehicle Number</label>
+                            <input type="text" class="form-input" id="vehicleNumber" placeholder="DL 01 AB 1234" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tracker ID (Optional)</label>
+                            <input type="text" class="form-input" id="trackerId" placeholder="Auto-generated if empty">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tracker Location (Address or Lat,Lng)</label>
+                            <input type="text" class="form-input" id="trackerLocation" placeholder="e.g. Sector 9 Rohini or 28.6139, 77.2090">
+                            <small style="color: var(--text-muted); font-size: 0.7rem;">
+                                Provide an address or exact coordinates to store an accurate position.
+                            </small>
+                        </div>
+                        <button type="submit" class="btn-register" id="registerBtn">
+                            Register Tracker
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Registered Devices -->
+                <div class="form-panel devices-panel">
+                    <h2 class="form-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                        Registered Trackers
+                    </h2>
+                    <div class="devices-list" id="devicesList">
+                        <!-- Devices will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Map -->
+            <div class="map-section">
+                <div class="map-header">
+                    <h3>Live Tracking</h3>
+                    <div class="tracking-info" id="trackingInfo" style="display: none;">
+                        <div class="tracking-stat">
+                            <span class="value" id="trackSpeed">0</span>
+                            <span class="label">km/h</span>
+                        </div>
+                        <div class="tracking-stat">
+                            <span class="value" id="trackHeading">--</span>
+                            <span class="label">Direction</span>
+                        </div>
+                        <div class="tracking-stat">
+                            <span class="value" id="trackLast">--</span>
+                            <span class="label">Last Update</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="trackingMap">
+                    <div class="empty-state" id="mapEmptyState">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="10" r="3"/>
+                            <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/>
+                        </svg>
+                        <p>Select a registered tracker to view its location</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Toast -->
+        <div class="success-toast" id="successToast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span id="toastMessage">Tracker registered successfully!</span>
+        </div>
+
+        <!-- Footer -->
+        <footer class="status-bar">
+            <div class="status-item">
+                <span class="status-dot online"></span>
+                <span>System Online</span>
+            </div>
+            <div class="status-item">
+                <span>Registered Trackers: <span id="totalTrackers">0</span></span>
+            </div>
+            <div class="status-item">
+                <span>Active Now: <span id="activeTrackers">0</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="tracker.js"></script>
+</body>
+</html>
+
